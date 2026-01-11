@@ -45,28 +45,30 @@ export function asyncScriptLoader(baseUrl: string, queryParamObject: { [key: str
 	headElement.insertAdjacentElement('beforeend', scriptElement);
 
 	return new Promise(function (resolve, reject) {
-		// Resolve  promise automatically when we ran out of time
-		const timeout = setTimeout(() => {
-			cleanup();
-			resolve();
-			console.warn(`${constructedUrl} was loading for too long time.`);
-		}, timeoutDuration);
-
-		const cleanup = () => {
+		const cleanup = (removeElement: boolean = false) => {
 			clearTimeout(timeout);
 			scriptElement.removeEventListener('load', onLoad);
 			scriptElement.removeEventListener('error', onError);
+			if (removeElement && scriptElement.parentNode) {
+				scriptElement.parentNode.removeChild(scriptElement);
+			}
 		};
 
+		// Reject promise when script loading times out
+		const timeout = setTimeout(() => {
+			cleanup(true);
+			reject(new Error(`Script loading timed out after ${timeoutDuration}ms: ${constructedUrl}`));
+		}, timeoutDuration);
+
 		// Handle when script is loaded successfully
-		const onLoad = function (event: Event) {
+		const onLoad = function (_event: Event) {
 			cleanup();
 			resolve();
 		};
 
 		// Handle when there was an error while loading the script
-		const onError = function (event: Event) {
-			cleanup();
+		const onError = function (_event: Event) {
+			cleanup(true);
 			reject(new Error(`Failed to load ${constructedUrl}.`));
 		};
 
