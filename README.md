@@ -213,4 +213,6 @@ npm run preview
 
 ## License
 
-ISC
+MIT © [Zoltan Radics](https://github.com/zoltanradics)
+
+Made with ❤️ by [Zoltan Radics](https://github.com/zoltanradics)

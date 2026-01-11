@@ -38,7 +38,7 @@
     "cdn"
   ],
   "author": "Zoltan Radics",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zoltanradics/async-script-loader.git"
