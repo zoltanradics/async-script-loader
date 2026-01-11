@@ -1,0 +1,2 @@
+# Exclude demo HTML files from language statistics
+index.html linguist-documentation
