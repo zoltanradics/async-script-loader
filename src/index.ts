@@ -7,10 +7,13 @@ export function asyncScriptLoader(baseUrl: string, queryParamObject: { [key: str
 	if (baseUrl.trim() === '') {
 		return Promise.reject(new Error('baseUrl cannot be empty'));
 	}
-	try {
-		new URL(baseUrl);
-	} catch {
-		return Promise.reject(new Error('baseUrl must be a valid URL'));
+
+	if (baseUrl.startsWith('http') || baseUrl.startsWith('https')) {
+		try {
+			new URL(baseUrl);
+		} catch {
+			return Promise.reject(new Error('baseUrl must be a valid URL'));
+		}
 	}
 
 	// Validate queryParamObject
