@@ -1,32 +1,61 @@
+interface ValidationResult {
+	valid: boolean;
+	error?: Error;
+}
 
-export function asyncScriptLoader(baseUrl: string, queryParamObject: { [key: string]: string }): Promise<void> {
+function validateInputs(
+	baseUrl: unknown,
+	queryParamsObject: unknown
+): ValidationResult {
 	// Validate baseUrl
 	if (typeof baseUrl !== 'string') {
-		return Promise.reject(new TypeError('baseUrl must be a string'));
+		return { valid: false, error: new TypeError('baseUrl must be a string') };
 	}
 	if (baseUrl.trim() === '') {
-		return Promise.reject(new Error('baseUrl cannot be empty'));
+		return { valid: false, error: new Error('baseUrl cannot be empty') };
 	}
 
-	if (baseUrl.startsWith('http') || baseUrl.startsWith('https')) {
-		try {
-			new URL(baseUrl);
-		} catch {
-			return Promise.reject(new Error('baseUrl must be a valid URL'));
+	// Validate URL and enforce safe protocols
+	try {
+		const url = new URL(baseUrl, window.location.origin);
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+			return { valid: false, error: new Error('baseUrl must use http: or https: protocol') };
+		}
+	} catch {
+		return { valid: false, error: new Error('baseUrl must be a valid URL') };
+	}
+
+	// Validate queryParamsObject
+	if (queryParamsObject === null || queryParamsObject === undefined) {
+		return { valid: false, error: new TypeError('queryParamsObject must be an object') };
+	}
+	if (typeof queryParamsObject !== 'object' || Array.isArray(queryParamsObject)) {
+		return { valid: false, error: new TypeError('queryParamsObject must be a plain object') };
+	}
+
+	const params = queryParamsObject as Record<string, unknown>;
+	for (const key of Object.keys(params)) {
+		if (key.trim() === '') {
+			return { valid: false, error: new Error('queryParamsObject keys cannot be empty') };
+		}
+		if (typeof params[key] !== 'string') {
+			return { valid: false, error: new TypeError(`queryParamsObject value for key "${key}" must be a string`) };
 		}
 	}
 
-	// Validate queryParamObject
-	if (queryParamObject === null || queryParamObject === undefined) {
-		return Promise.reject(new TypeError('queryParamObject must be an object'));
+	return { valid: true };
+}
+
+export function asyncScriptLoader(baseUrl: string, queryParamObject: Record<string, string>): Promise<void> {
+	// Check if script is loaded into a browser environment
+	if (typeof window === 'undefined') {
+		return Promise.reject(new Error('asyncScriptLoader requires a browser environment'));
 	}
-	if (typeof queryParamObject !== 'object' || Array.isArray(queryParamObject)) {
-		return Promise.reject(new TypeError('queryParamObject must be a plain object'));
-	}
-	for (const key of Object.keys(queryParamObject)) {
-		if (typeof queryParamObject[key] !== 'string') {
-			return Promise.reject(new TypeError(`queryParamObject value for key "${key}" must be a string`));
-		}
+
+	// Validate inputs using shared helper
+	const validation = validateInputs(baseUrl, queryParamObject);
+	if (!validation.valid) {
+		return Promise.reject(validation.error);
 	}
 
 	const timeoutDuration = 2000;
@@ -77,26 +106,11 @@ export function asyncScriptLoader(baseUrl: string, queryParamObject: { [key: str
 	});
 }
 
-function generateUrl(baseUrl: string, queryParamsObject: { [key: string]: string }): string {
-	// Validate baseUrl
-	if (typeof baseUrl !== 'string') {
-		throw new TypeError('baseUrl must be a string');
-	}
-	if (baseUrl.trim() === '') {
-		throw new Error('baseUrl cannot be empty');
-	}
-
-	// Validate queryParamsObject
-	if (queryParamsObject === null || queryParamsObject === undefined) {
-		throw new TypeError('queryParamsObject must be an object');
-	}
-	if (typeof queryParamsObject !== 'object' || Array.isArray(queryParamsObject)) {
-		throw new TypeError('queryParamsObject must be a plain object');
-	}
-	for (const key of Object.keys(queryParamsObject)) {
-		if (typeof queryParamsObject[key] !== 'string') {
-			throw new TypeError(`queryParamsObject value for key "${key}" must be a string`);
-		}
+function generateUrl(baseUrl: string, queryParamsObject: Record<string, string>): string {
+	// Validation is already done in asyncScriptLoader, but validate if called directly
+	const validation = validateInputs(baseUrl, queryParamsObject);
+	if (!validation.valid) {
+		throw validation.error;
 	}
 
 	const keys = Object.keys(queryParamsObject);
