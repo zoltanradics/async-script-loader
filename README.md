@@ -1,5 +1,8 @@
 # Async Script Loader
 
+[![npm version](https://img.shields.io/npm/v/@zoltanradics/async-script-loader.svg)](https://www.npmjs.com/package/@zoltanradics/async-script-loader)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A lightweight TypeScript library for dynamically loading external JavaScript files with promise-based API and automatic timeout handling.
 
 ## Features
